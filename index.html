@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coded Feelings to Arooj</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary-neon: #00f9ff;
+      --secondary-neon: #ff00e0;
+      --bg-1: #050510;
+      --bg-2: #120022;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 100vw; height: 100vh; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace;
+      background: linear-gradient(135deg,var(--bg-1),var(--bg-2));
+      color: var(--primary-neon);
+    }
+    /* Placeholder background image */
+    body::before {
+      content: ""; position: fixed; inset: 0;
+      background: url('https://od.lk/s/MzhfMjk3ODUxNjdf/IMG-20250316-WA0015_1.jpg') center/cover no-repeat;
+      opacity: .12; z-index: -3;
+    }
+    /* Noise overlay */
+    body::after {
+      content: ""; position: fixed; inset: 0;
+      background-image: url('https://grainy-gradients.vercel.app/noise.svg');
+      opacity: .05; pointer-events: none; z-index: -2;
+    }
+    /* Floating hearts canvas */
+    #hearts-canvas { position: fixed; inset: 0; pointer-events:none; z-index:-1; }
+
+    /* Text */
+    #message-box {
+      max-width: 90%; text-align:center;
+      font-size: clamp(1.5rem,5vw,3.2rem);
+      line-height: 1.6;
+      text-shadow: 0 0 6px var(--primary-neon),0 0 12px var(--primary-neon),0 0 24px var(--secondary-neon),0 0 48px var(--secondary-neon);
+    }
+    .cursor { display:inline-block; width:1ch; background:var(--secondary-neon); animation: blink .9s steps(1) infinite; }
+    @keyframes blink { 50% {opacity:0;} }
+
+    /* Play/Pause button */
+    #toggle {
+      position: fixed; bottom: 24px; right: 24px;
+      width: 64px; height: 64px; border-radius:50%; border:none; cursor:pointer;
+      background: rgba(255,255,255,0.08); backdrop-filter: blur(4px);
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.6rem; color: var(--primary-neon);
+      box-shadow: 0 0 10px rgba(0,0,0,.4), 0 0 12px var(--secondary-neon);
+      transition: transform .2s;
+    }
+    #toggle:hover { transform: scale(1.05); }
+  </style>
+</head>
+<body>
+  <!-- Hearts Canvas -->
+  <canvas id="hearts-canvas"></canvas>
+  <!-- Message -->
+  <div id="message-box"><span id="typewriter"></span><span class="cursor"></span></div>
+  <!-- Play / Pause button -->
+  <button id="toggle" aria-label="Play/Pause">▶️</button>
+  <!-- BGM -->
+  <audio id="bgm" src="https://od.lk/s/MzhfMjk3ODUxNzBf/lv_0_20250605214950_20250605_215908.mp3" preload="auto" loop></audio>
+
+  <script>
+    /* ==== TYPEWRITER DATA ==== */
+    const lines = [
+      'AROOJ',
+      'I REALLY MISS YOU',
+      'I LOVE YOU SOO MUCH',
+      'I NEED YOU RIGHT HERE',
+      'WHY DID YOU IGNORE ME',
+      'WHY YOU DONT WANT TO TALK TO ME',
+      'YOU KNOW I CANT SLEEP WITHOUT SEEING YOUR TEXT',
+      'I CAN\'T START MY DAY WITHOUT TEXTING YOU',
+      'HOW CAN YOU FORGOT TO TEXT ME 😢',
+      'PLEASE FORGIVE ME IF I DID MISTAKE',
+      'I AM REALLY SORRY JAAAN IF I HURT YOU',
+      'BUT REALITY IS YOU HURT ME MORE 😥'
+    ];
+
+    const el = document.getElementById('typewriter');
+    let lineIdx = 0, charIdx = 0, timeoutId = null, isErasing = false, isPaused = true;
+    const speed = 65, hold = 3000; // ms
+
+    function schedule(fn, delay) { timeoutId = setTimeout(fn, delay); }
+    function clear() { if (timeoutId) clearTimeout(timeoutId); }
+
+    function typingStep() {
+      if (isPaused) return; // early exit, will resume later
+
+      if (!isErasing) { // typing mode
+        if (charIdx < lines[lineIdx].length) {
+          el.textContent += lines[lineIdx][charIdx++];
+          schedule(typingStep, speed);
+        } else {
+          isErasing = true;
+          schedule(typingStep, hold);
+        }
+      } else { // erasing mode
+        if (charIdx > 0) {
+          el.textContent = el.textContent.slice(0, -1);
+          charIdx--;
+          schedule(typingStep, speed / 2);
+        } else {
+          isErasing = false;
+          lineIdx = (lineIdx + 1) % lines.length;
+          schedule(typingStep, speed * 3);
+        }
+      }
+    }
+
+    /* ==== PLAY / PAUSE CONTROL ==== */
+    const audio = document.getElementById('bgm');
+    const btn = document.getElementById('toggle');
+    function playAll() {
+      audio.play();
+      if (isPaused) {
+        isPaused = false;
+        typingStep(); // kick / resume
+      }
+      btn.textContent = '⏸️';
+    }
+    function pauseAll() {
+      audio.pause();
+      isPaused = true;
+      clear(); // stop further typing until resumed
+      btn.textContent = '▶️';
+    }
+    btn.addEventListener('click', () => {
+      if (audio.paused) playAll(); else pauseAll();
+    });
+
+    /* ==== START ON FIRST CLICK TO COMPLY WITH BROWSERS ==== */
+    // auto-show overlay instructions if needed (not implemented)
+
+    /* ==== HEARTS CANVAS ==== */
+    const canvas = document.getElementById('hearts-canvas');
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+    addEventListener('resize', resize); resize();
+
+    const colors = ['#ff008c','#00eaff','#faff00','#ff00d4'];
+    const hearts = Array.from({length: 40}, () => newHeart());
+    function newHeart() {
+      return { x: Math.random()*canvas.width, y: canvas.height+Math.random()*canvas.height,
+        size: 10+Math.random()*20, speed: .3+Math.random()*.7,
+        color: colors[Math|0*Math.random()*colors.length] };
+    }
+    function drawHeart(h) {
+      ctx.strokeStyle = h.color; ctx.lineWidth = 2; const {x,y,size:s}=h;
+      ctx.beginPath(); ctx.moveTo(x,y);
+      ctx.bezierCurveTo(x-s*.5,y-s*.5,x-s,y+s*.3,x,y+s);
+      ctx.bezierCurveTo(x+s,y+s*.3,x+s*.5,y-s*.5,x,y);
+      ctx.stroke();
+    }
+    function animate() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for (const h of hearts) {
+        h.y -= h.speed; if (h.y < -h.size) { h.x=Math.random()*canvas.width; h.y=canvas.height+h.size; }
+        drawHeart(h);
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
